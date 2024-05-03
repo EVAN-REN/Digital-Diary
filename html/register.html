@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/style.css" type="text/css" media="all" />
+	<link rel="stylesheet" href="css/fontawesome-all.css">
+    <title>Register</title>
+</head>
+<body>
+    <h1>My Digital Library</h1>
+	<div class="main">
+		<form class="container" action="#" method="post">
+			<h2>Register Now</h2>
+			<div class="form-style-agile">
+				<label>
+					<i class="fas fa-user"></i>
+					Username
+				</label>
+				<input placeholder="Username" id="username" name="Name" type="text" required="">
+			</div>
+			<div class="form-style-agile">
+				<label>
+					<i class="fas fa-unlock-alt"></i>
+					Password
+				</label>
+				<input placeholder="Password" id="user-password" name="Password" type="password" required="">
+			</div>
+            <div class="form-style-agile">
+				<label>
+					<i class="fas fa-envelope"></i>
+					Email
+				</label>
+				<input placeholder="Email" id="email" name="email" type="text" required="">
+			</div>
+			<div class="loginbtn">
+				<button type="button" id="loginButton">register</button>
+			</div>
+			<div>
+				<p id="loginResult"></p>
+			</div>
+		</form>
+	</div>
+    
+    <script>
+        document.getElementById("loginButton").addEventListener("click", function(event) {
+            var username = document.getElementById("username").value;
+			var password = document.getElementById("user-password").value;
+			var email = document.getElementById('email').value;
+
+            // replace
+            fetch('https://4y9p6nui4m.execute-api.us-east-2.amazonaws.com/dev/users/register', {
+                method: 'POST',
+                body: JSON.stringify({
+					username: username,
+					password: password,
+                    email: email,
+				}),
+                headers:{
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                if(response.ok){
+                    console.log('Success');
+                    window.location.href = 'login.html';
+                }else{
+                    document.getElementById("loginResult").textContent = "Register failed due to an error.";
+				    document.getElementById("loginResult").style.color = "red";
+                } 
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                document.getElementById("loginResult").textContent = "Register failed due to an error.";
+				document.getElementById("loginResult").style.color = "red";
+            });
+        });
+    </script>
+</body>
+</html>

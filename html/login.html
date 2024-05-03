@@ -1,0 +1,113 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+<head>
+	<title>Login</title>
+	<meta charset="UTF-8" />
+	<link rel="stylesheet" href="css/style.css" type="text/css" media="all" />
+	<link rel="stylesheet" href="css/fontawesome-all.css">
+</head>
+
+<body>
+
+	<h1>My Digital Library</h1>
+	<div class="main">
+		<form class="container" action="#" method="post">
+			<h2>Login Now</h2>
+			<div class="form-style-agile">
+				<label>
+					<i class="fas fa-user"></i>
+					Username
+				</label>
+				<input placeholder="Username" id="username" name="Name" type="text" required="">
+			</div>
+			<div class="form-style-agile">
+				<label>
+					<i class="fas fa-unlock-alt"></i>
+					Password
+				</label>
+				<input placeholder="Password" id="user-password" name="Password" type="password" required="">
+			</div>
+			<!-- checkbox -->
+			<div class="wthree-text">
+				<ul>
+					<li>
+						<label class="anim">
+							<input type="checkbox" id="checkbox" class="checkbox" required="">
+							<span>Stay Signed In</span>
+						</label>
+					</li>
+					<li>
+						<a href="#">Forgot Password?</a>
+					</li>
+					<li>
+						<a href="register.html">Register</a>
+					</li>
+				</ul>
+			</div>
+			<!-- //checkbox -->
+			<div class="loginbtn">
+				<button type="button" id="loginButton">Login</button>
+			</div>
+			<div>
+				<p id="loginResult"></p>
+			</div>
+		</form>
+	</div>
+
+	<script>
+		var storedUsername = localStorage.getItem('libraryUsername');
+		var storedPassword = localStorage.getItem('libraryPassword');
+
+		if (storedUsername && storedPassword) {
+			document.getElementById('username').value = storedUsername;
+			document.getElementById('user-password').value = storedPassword;
+		}
+
+        document.getElementById("loginButton").addEventListener("click",function() {
+			var username = document.getElementById("username").value;
+			var password = document.getElementById("user-password").value;
+			var checkbox = document.getElementById('checkbox');
+			// Replace 
+			fetch('https://4y9p6nui4m.execute-api.us-east-2.amazonaws.com/dev/users/login', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					// 'Access-Control-Allow-Origin': 'http://library-static-content.s3-website.us-east-2.amazonaws.com'
+				},
+				body: JSON.stringify({
+					username: username,
+					password: password,
+				}),
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.token) {
+					// If login is successful and a token is received
+					localStorage.setItem("token", data.token); // Save the token
+
+					if (checkbox.checked) {
+						localStorage.setItem("libraryUsername", username);
+						localStorage.setItem("libraryPassword", password);
+					}else{
+						localStorage.removeItem("libraryUsername", username);
+						localStorage.removeItem("libraryPassword", password);
+					}
+
+					window.location.href = "index.html"; // Redirect to the main page
+				} else {
+					// Handle login failure
+					document.getElementById("loginResult").textContent = "Invalid username or password.";
+					document.getElementById("loginResult").style.color = "red";
+				}
+			})
+			.catch((error) => {
+				console.error('Error:', error);
+				document.getElementById("loginResult").textContent = "Login failed due to an error.";
+				document.getElementById("loginResult").style.color = "red";
+			});
+		});
+    </script>
+</body>
+
+</html>

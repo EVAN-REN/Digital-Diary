@@ -281,11 +281,25 @@ h2 {
     font-weight: 500;
 }
 
+.loginbtn {
+    margin-bottom: 1.5em;
+    flex-basis: 100%;
+    -webkit-flex-basis: 100%;
+    text-align: center;
+}
+
 #loginButton {
+    
     width: 50%;
-    height: 50px;
+    height: 45px;
     font-size: 18px;
 }
+
+.loginResult {
+    display: block;
+}
+
+
 
 /*-- checkbox --*/
 
