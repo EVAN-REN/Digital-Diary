@@ -61,9 +61,13 @@
                 }
             })
             .then(response => {
-                if(response.ok){
+                if(response.status === 200){
+
                     console.log('Success');
                     window.location.href = 'login.html';
+                }else if(response.status === 401){
+                    document.getElementById("loginResult").textContent = "The user name is unavailable.";
+				    document.getElementById("loginResult").style.color = "red";
                 }else{
                     document.getElementById("loginResult").textContent = "Register failed due to an error.";
 				    document.getElementById("loginResult").style.color = "red";

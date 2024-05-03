@@ -14,7 +14,7 @@ async function generateAuthToken(username) {
     // const token = `${new Date().toISOString()}`; // Generate a unique token
     const token = uuidv4();
     await client.connect();
-    const collection = client.db("Demo").collection("tokens");
+    const collection = client.db("library").collection("tokens");
     await collection.insertOne({ username, token, createdAt: new Date()});
     await client.close();
     return token;
