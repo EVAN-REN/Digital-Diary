@@ -295,7 +295,15 @@ h2 {
     font-size: 18px;
 }
 
-.loginResult {
+#getToken {
+    
+    width: 30%;
+    height: 46px;
+    font-size: 18px;
+    margin-left: 10px;
+}
+
+.loginResult{
     display: block;
 }
 
