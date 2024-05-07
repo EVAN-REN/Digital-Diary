@@ -10,7 +10,7 @@
 
 <body>
 
-	<h1>My Digital Library</h1>
+	<h1>Books Diary</h1>
 	<div class="main">
 		<form class="container" action="#" method="post">
 			<h2>Login Now</h2>
@@ -56,6 +56,8 @@
 	</div>
 
 	<script>
+
+		// If Stay-Signed In box is checked, fill username and password based on it
 		var storedUsername = localStorage.getItem('libraryUsername');
 		var storedPassword = localStorage.getItem('libraryPassword');
 
@@ -68,12 +70,11 @@
 			var username = document.getElementById("username").value;
 			var password = document.getElementById("user-password").value;
 			var checkbox = document.getElementById('checkbox');
-			// Replace 
-			fetch('https://4y9p6nui4m.execute-api.us-east-2.amazonaws.com/dev/users/login', {
+			// Replace url with your API (Refer AWS API Gateway - stages - your API) 
+			fetch('https://plu4co29ig.execute-api.us-east-2.amazonaws.com/login/login', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
-					// 'Access-Control-Allow-Origin': 'http://library-static-content.s3-website.us-east-2.amazonaws.com'
 				},
 				body: JSON.stringify({
 					username: username,
@@ -94,7 +95,7 @@
 						localStorage.removeItem("libraryPassword", password);
 					}
 
-					window.location.href = "index.html"; // Redirect to the main page
+					window.location.href = "history.html"; // Redirect to the main page (user library)
 				} else {
 					// Handle login failure
 					document.getElementById("loginResult").textContent = "Invalid username or password.";

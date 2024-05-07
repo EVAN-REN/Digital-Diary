@@ -289,12 +289,13 @@ h2 {
 }
 
 #loginButton {
+    
     width: 50%;
     height: 45px;
     font-size: 18px;
 }
 
-.loginResult{
+.loginResult {
     display: block;
 }
 

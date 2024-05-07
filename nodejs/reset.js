@@ -12,7 +12,7 @@ const corsHeaders = {
 
 async function resetUser(username, email, password) {
     await client.connect();
-    const collection = client.db("library").collection("users");
+    const collection = client.db("Library").collection("users");
     await collection.updateOne(
         { username, email },
         { $set: { password: password } }
@@ -22,7 +22,7 @@ async function resetUser(username, email, password) {
 
 async function findToken(username, email) {
     await client.connect();
-    const collection = client.db("library").collection("resettoken");
+    const collection = client.db("Library").collection("resettoken");
     const user = await collection.findOne({username, email});
     await client.close();
     return user.token;

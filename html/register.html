@@ -6,9 +6,23 @@
     <link rel="stylesheet" href="css/style.css" type="text/css" media="all" />
 	<link rel="stylesheet" href="css/fontawesome-all.css">
     <title>Register</title>
+	<style>
+	.alert {
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			transform: translateX(-50%);
+			background-color: #8ee765;
+			color: #1c7b2c;
+			padding: 10px 20px;
+			border: 1px solid #70e170;
+			border-radius: 5px;
+			box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+	}
+	</style>
 </head>
 <body>
-    <h1>My Digital Library</h1>
+    <h1>Books Diary</h1>
 	<div class="main">
 		<form class="container" action="#" method="post">
 			<h2>Register Now</h2>
@@ -48,8 +62,8 @@
 			var password = document.getElementById("user-password").value;
 			var email = document.getElementById('email').value;
 
-            // replace
-            fetch('https://4y9p6nui4m.execute-api.us-east-2.amazonaws.com/dev/users/register', {
+            // Replace url with your API (Refer AWS API Gateway - stages - your API) 
+            fetch('https://plu4co29ig.execute-api.us-east-2.amazonaws.com/login/register', {
                 method: 'POST',
                 body: JSON.stringify({
 					username: username,
@@ -62,9 +76,15 @@
             })
             .then(response => {
                 if(response.status === 200){
-
                     console.log('Success');
-                    window.location.href = 'login.html';
+					var alertBox = document.createElement('div');
+					alertBox.classList.add('alert');
+					alertBox.textContent = "Registration success!"
+					document.body.appendChild(alertBox);
+
+					setTimeout(function() {
+						window.location.href = 'login.html';
+					}, 1000);
                 }else if(response.status === 401){
                     document.getElementById("loginResult").textContent = "The user name is unavailable.";
 				    document.getElementById("loginResult").style.color = "red";

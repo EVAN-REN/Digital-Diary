@@ -6,9 +6,29 @@
     <link rel="stylesheet" href="css/style.css" type="text/css" media="all" />
 	<link rel="stylesheet" href="css/fontawesome-all.css">
     <title>Forget</title>
+    <style>
+        .alert {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translateX(-50%);
+                background-color: #8ee765;
+                color: #1c7b2c;
+                padding: 10px 20px;
+                border: 1px solid #70e170;
+                border-radius: 5px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #getToken {
+    width: 30%;
+    height: 46px;
+    font-size: 18px;
+    margin-left: 10px;
+}
+    </style>
 </head>
 <body>
-    <h1>My Digital Library</h1>
+    <h1>Books Diary</h1>
 	<div class="main">
 		<form class="container" action="#" method="post">
 			<h2>Reset Password Now</h2>
@@ -33,7 +53,7 @@
 				</label>
                 <div  style="display: flex; align-items: center;">
                     <input placeholder="Token" id="at" name="at" type="text" required="">
-                    <button type="button" id="getToken">get token</button>
+                    <button type="button" id="getToken" width="30%" height="46px" font-size="18px" margin-left="10px">get token</button>
                 </div>
 			</div>
             <div class="form-style-agile">
@@ -58,8 +78,9 @@
             var username = document.getElementById("username").value;
 			var email = document.getElementById('email').value;
 
-            // replace
-            fetch('https://4y9p6nui4m.execute-api.us-east-2.amazonaws.com/dev/users/forget', {
+            // Replace url with your API (Refer AWS API Gateway - stages - your API) 
+            // This is for getting token which is used for resetting password
+            fetch('https://plu4co29ig.execute-api.us-east-2.amazonaws.com/login/forget', {
                 method: 'POST',
                 body: JSON.stringify({
 					username: username,
@@ -93,9 +114,9 @@
 			var email = document.getElementById('email').value;
             var verifytoken = document.getElementById('at').value;
             var password = document.getElementById("user-password").value;
-            console.log(username,email,verifytoken,password);
-            // replace
-            fetch('https://4y9p6nui4m.execute-api.us-east-2.amazonaws.com/dev/users/reset', {
+            // Replace url with your API (Refer AWS API Gateway - stages - your API) 
+            // This is for reset button
+            fetch('https://plu4co29ig.execute-api.us-east-2.amazonaws.com/login/reset', {
                 method: 'POST',
                 body: JSON.stringify({
 					username: username,
@@ -110,6 +131,11 @@
             .then(response => {
                 if(response.status === 200){
                     console.log('Success');
+					var alertBox = document.createElement('div');
+					alertBox.classList.add('alert');
+					alertBox.textContent = "Password changed!"
+					document.body.appendChild(alertBox);
+
                     window.location.href = 'login.html';
                 }else if(response.status === 401){
                     document.getElementById("loginResult").textContent = "Token is incorrect";

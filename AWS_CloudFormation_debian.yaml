@@ -1,0 +1,173 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  InstanceIamProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+        Roles:
+          - !Ref InstanceRole
+        InstanceProfileName: !Sub ${NamePrefix}-mongo-instance-profile
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+        AssumeRolePolicyDocument:
+            Statement:
+              - Effect: Allow
+                Principal:
+                  Service:
+                    - ec2.amazonaws.com
+                Action:
+                  - sts:AssumeRole
+        ManagedPolicyArns:
+            - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+            - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        Policies:
+            - PolicyName: ssm-parameters
+              PolicyDocument:
+                Version: 2012-10-17
+                Statement:
+                  - Effect: Allow
+                    Action:
+                        - ssm:GetParameter
+                        - ssm:GetParameters
+                    Resource: '*'
+        Path: /
+        RoleName: !Sub ${NamePrefix}-mongo-instance-role
+  InstanceSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupName: !Sub ${NamePrefix}-mongo-instance-sg
+        GroupDescription: !Sub ${NamePrefix} mongo instance host security group
+        VpcId: !Ref VpcId
+        SecurityGroupEgress:
+          - IpProtocol: -1
+            CidrIp: 0.0.0.0/0
+        SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+    # this should be the vpc default security group or finer, but open for demo
+            CidrIp: 0.0.0.0/0
+        Tags:
+          - Key: Name
+            Value: !Sub ${NamePrefix}-mongo-instance-sg
+  InstanceKeypair:
+      Type: AWS::EC2::KeyPair
+      Properties:
+        KeyName: !Sub ${NamePrefix}-ec2-keypair
+        KeyType: ed25519
+        PublicKeyMaterial: !Ref Ec2KeyPairPublic
+  Ec2Instance:
+      Type: AWS::EC2::Instance
+      Properties:
+        DisableApiTermination: false
+        InstanceInitiatedShutdownBehavior: stop
+        IamInstanceProfile: !Ref InstanceIamProfile
+        ImageId: !Ref Ec2Ami
+        InstanceType: !Ref Ec2InstanceType
+        KeyName: !Ref InstanceKeypair
+        SecurityGroupIds:
+          - !Ref InstanceSecurityGroup
+        UserData: !Base64
+          Fn::Sub: |
+            #!/bin/bash -xe
+            exec 3>&1 4>&2 >/var/log/user-data.log 2>&1
+            date --utc '+%Y-%m-%d %H:%M:%S'
+            export DEBIAN_FRONTEND=noninteractive
+            export AWS_DEFAULT_REGION=${AWS::Region}
+            
+            apt-get update
+            
+            apt-get install -y \
+              python3-pip \
+              python3-setuptools
+          
+            rm -f /usr/lib/python*/EXTERNALLY-MANAGED
+            pip3 install awscli --upgrade --progress-bar off
+            apt-get install -y \
+              apt-transport-https \
+              ca-certificates \
+              curl \
+              gnupg2 \
+              software-properties-common
+
+            curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add - 
+            
+            add-apt-repository \
+              "deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/debian \
+              $(lsb_release -cs) \
+              stable"
+            
+            apt-get update -y
+
+            cat > /home/admin/test3.yml << 'EOF'
+            version: '3.1'
+            EOF
+              
+            apt-get install -y \
+              docker-ce \
+              docker-ce-cli \
+              containerd.io
+
+            cat > /home/admin/test4.yml << 'EOF'
+            version: '3.1'
+            EOF
+
+            usermod -aG docker admin
+
+            cat > /root/mongo-docker-compose.yml << 'EOF'
+            version: '3.1'
+            services:
+              mongo:
+                image: mongo
+                container_name: mongodb
+                restart: always
+                ports:
+                  - 27017:27017
+                environment:
+                  MONGO_INITDB_ROOT_USERNAME: admin
+                  MONGO_INITDB_ROOT_PASSWORD: vBTaTtAqabuC4NvV7jm3
+                volumes:
+                  - /data/mongo:/data/db
+              
+              explorer:
+                image: mongo-express
+                container_name: mongo-express
+                restart: always
+                ports:
+                  - 8081:8081
+                environment:
+                  ME_CONFIG_MONGODB_SERVER: mongodb
+                  ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+                  ME_CONFIG_MONGODB_ADMINPASSWORD: vBTaTtAqabuC4NvV7jm3 
+            EOF
+
+            docker compose -f /root/mongo-docker-compose.yml up -d
+          
+            exec 1>&3 2>&4
+        Tags:
+          - Key: Name
+            Value: !Sub ${NamePrefix}-mongo-instance
+Parameters:
+  NamePrefix:
+    Type: String
+    Description: Prefix for names and identifying tags
+    Default: google-books # Replace it with your EC2 name
+  Ec2InstanceType:
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+#VpcSubnets:
+#  Type: String
+#  Default:
+  Ec2Ami:
+    Type: AWS::EC2::Image::Id
+    Default: ami-0ec3d9efceafb89e0 # Replace it with your AMI
+  Ec2KeyPairPublic:
+    Type: String
+    Default: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQD+qLa7ho2y+SXRmN9D7xKaHqP0a1HLNr01VoiIENtwE4s9S4oAg12rthvHuJ0yCjX+Fx92R2WnJ5EouEPKlUeN+TIZ0XyHZ8i8RcpWGzgD3jXtYKJ0Yakh3aXV38cVRjZekxB1ZWP4Pi+D3ZPiaPISGWrWc/SBVt5MUlZKgsbmTfsKZXQKLh1yfXaIKqLP79fzAv9VClY9lyRz7RrmDzxmDUKWHHa2uQKlByjJSr3ayhFZ3UeSKGV4Ud6/1LqtZpzdXpkSnXWnfiCeYAHylqf1VdMYcuo82NNtfD1/3rpwW2vRxoDlDDbw1UtKZoMTzaPSyyMczycSBdrOMXvAAnHxfT6D40nrRJfIbrY2G3NvEiGJ148XG09yUI8df6JsHsD76OFMnk9IM9nYskU+FRrnuv5fSYDswoiLZ8G2yoCyit+wc5vtxYQgiKgFizvU5Z/tKUJRKiQFHWdqBDmcI5FudDuab7NVEgh+3pr96Bt9q2AwMhFyfpDHnbBaNpFqrGM= namujhp@bagjongcBookPro.lan # Replace it with your ssh-rsa public key
+
+
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-063a3fb213989f5f8 # Replace it with your vpc

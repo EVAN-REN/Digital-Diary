@@ -3,7 +3,7 @@ import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 
 const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri);
-// mongodb://admin:vBTaTtAqabuC4NvV7jm3@18.188.34.186:27017
+
 // replace region
 const sesClient = new SESClient({ region: "us-east-2" });
 
@@ -15,7 +15,7 @@ const corsHeaders = {
 async function generateResetToken(username, email) {
     const token = Math.floor(1000 + Math.random() * 9000);
     await client.connect();
-    const collection = client.db("library").collection("resettoken");
+    const collection = client.db("Library").collection("resettoken");
     await collection.deleteOne({ username, email });
     await collection.insertOne({ username: username, email: email, token: token});
     await client.close();
@@ -25,7 +25,7 @@ async function generateResetToken(username, email) {
 async function findUser(username, email) {
     console.log("finding user")
     await client.connect();
-    const collection = client.db("library").collection("users");
+    const collection = client.db("Library").collection("users");
     const user = await collection.findOne({username, email});
     await client.close();
     return !user
@@ -60,10 +60,10 @@ export const handler = async (event) => {
                     },
                 },
                 Subject: {
-                    Data: "Digital Library Forget Password Token", // email subject
+                    Data: "Books Diary Token for forgetting password", // email subject
                 },
             },
-            Source: "kuimuren@usc.edu", // sender email address(verify in ese and replace)
+            Source: process.env.ADMIN_EMAIL, // sender email address(verify in ses and replace)
         };
 
         try {

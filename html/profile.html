@@ -1,0 +1,213 @@
+<html>
+    <head>
+        <title>User Profile</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <style>
+            .container {
+                max-width: 600px;
+                margin: 50px auto;
+                background-color: #fff;
+                padding: 20px;
+                border-radius: 5px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            }
+            h2 {
+                text-align: center;
+            }       
+
+            .user-info {
+                margin-top: 30px;
+            }
+
+            .user-info p {
+                margin: 10px 0;
+            }
+
+            .save-btn {
+                display: block;
+                width: 100%;
+                padding: 10px;
+                margin-top: 20px;
+                background-color: #800000;
+                color: #FFC72C;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+            }
+
+            .save-btn:hover {
+                background-color: #630000;
+            }
+
+            .label {
+                font-weight: bold;
+            }     
+            .banner {
+                background-color: #990000;
+                color: #FFC72C;
+                padding: 15px 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .banner h1 {
+                margin: 0;
+                font-size: 24px;
+            }
+            .icon {
+                font-size: 28px;
+                margin: 0 10px;
+                cursor: pointer;
+            }
+
+            .alert {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translateX(-50%);
+                background-color: #8ee765;
+                color: #1c7b2c;
+                padding: 10px 20px;
+                border: 1px solid #70e170;
+                border-radius: 5px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .editable-email {
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="banner">
+            <h1>Books Diary</h1>
+            <div>
+                <i class="fa fa-user icon" onclick="profile()"></i>
+                <i class="fa fa-bookmark icon" onclick="history()"></i>
+                <i class="fa fa-search icon" onclick="search()"></i>
+                <i class="fa fa-sign-out icon" onclick="logout()"></i>
+            </div>
+        </div>
+        <div class="container">
+            <h2>User Profile</h2>
+            <div class="user-info">
+                <p><span class="label">Username:</span> <span id="username"></span></p>
+                <p><span class="label">Email:</span> <span id="useremail" class="editable-email" onclick="editEmail()"></span></p>
+            </div>
+            <button class="save-btn" onclick="saveChanges()">Save</button>
+        </div>
+        <script>
+            function profile() {
+                window.location.href = "profile.html";
+            }
+            
+            function search() {
+               window.location.href = "search.html";
+            }
+
+            function history() {
+                window.location.href = "history.html";
+            }
+            function logout() {
+                // deleteToken
+                var result = confirm("Do you want to logout?");
+                if(result) {
+                    // Replace url with your API (Refer AWS API Gateway - stages - your API) 
+                    fetch('https://plu4co29ig.execute-api.us-east-2.amazonaws.com/login/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        token: localStorage.getItem('token')
+                    })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                    if(data.message == 'logout success'){
+                        window.location.href = "login.html";
+                    } else {
+                        showAlert('logout failed');
+                    }
+                    })
+                } else {
+                    return;
+                }
+            }
+            function showAlert(msg) {
+            var alertBox = document.createElement('div');
+            alertBox.classList.add('alert');
+            alertBox.textContent = msg;
+            document.body.appendChild(alertBox);
+
+            // Remove the alert after 2 seconds
+            setTimeout(function() {
+                alertBox.remove();
+            }, 2000);
+            }
+
+            function editEmail() {
+                var emailSpan = document.getElementById("useremail");
+                var currentEmail = emailSpan.textContent.trim();
+
+                var inputField = document.createElement("input");
+                inputField.value = currentEmail;
+                inputField.id = 'useremail';
+
+                emailSpan.parentNode.replaceChild(inputField, emailSpan);
+
+                inputField.focus();
+            }
+
+            function saveChanges() {
+                // update user email
+                var useremailElement = document.getElementById('useremail');
+                var useremail = useremailElement.value;
+                // Replace url with your API (Refer AWS API Gateway - stages - your API) 
+                fetch('https://plu4co29ig.execute-api.us-east-2.amazonaws.com/login/updateUser', { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        token: localStorage.getItem('token'),
+                        useremail: useremail
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.message == 'user update success');
+                    showAlert('User update succeed');
+                    setTimeout(function() {
+                        window.location.href = "profile.html";
+                    }, 500);
+                })
+                .catch(error => {
+                    console.log(error);
+                })
+            }
+            // Replace url with your API (Refer AWS API Gateway - stages - your API) 
+            // fetch user information
+            fetch('https://plu4co29ig.execute-api.us-east-2.amazonaws.com/login/userInfo', { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    token: localStorage.getItem('token')
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                var usernameElement = document.getElementById('username');
+                usernameElement.innerHTML = data.username;
+                
+                var useremailElement = document.getElementById('useremail');
+                useremailElement.innerHTML = data.useremail;
+            })
+            .catch(error => {
+                console.log(error);
+            })
+
+        </script>
+    </body>
+</html>

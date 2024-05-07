@@ -1,0 +1,411 @@
+<html>
+  <head>
+    <title>User history</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+      .checked {
+          color: orange;
+      }
+        /* Styling for the banner */
+      .banner {
+          background-color: #990000;
+          color: #FFC72C;
+          padding: 15px 0;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
+
+      .save-button {
+          background-color: #990000; /* Green */
+          border: none;
+          color: #FFC72C;
+          padding: 10px 20px;
+          text-align: center;
+          text-decoration: none;
+          display: inline-block;
+          font-size: 16px;
+          margin-top: 10px;
+          border-radius: 5px;
+          margin-right: 10px;
+          cursor: pointer;
+      }
+
+      .delete-button {
+          background-color: #990000; /* Green */
+          border: none;
+          color: #FFC72C;
+          padding: 10px 20px;
+          text-align: center;
+          text-decoration: none;
+          display: inline-block;
+          font-size: 16px;
+          margin-top: 10px;
+          border-radius: 5px;
+          cursor: pointer;
+      }
+
+      .delete-button:hover {
+            background-color: #630000;
+      }
+
+      .save-button:hover {
+            background-color: #630000;
+      }
+
+      .banner h1 {
+          margin: 0;
+          font-size: 24px;
+      }
+      .icon {
+          font-size: 28px;
+          margin: 0 10px;
+          cursor: pointer;
+      }
+      .icon-star {
+          cursor: pointer;
+      }
+      .subtitle-text {
+          margin-top: 50px;
+          padding: 20px;
+          font-size: 24px;
+          border-radius: 5px;
+          color: #34322e;
+          font-weight : bold;
+      }
+      /* Styling for loading list */
+      .loading-list {
+          margin-top: 10px;
+          padding: 20px;
+          border: 1px solid #990000;
+          border-radius: 5px;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .loading-item {
+          padding: 10px;
+          border-bottom: 1px solid #990000;
+          display: flex;
+          align-items: center;
+      }
+
+      .loading-item:last-child {
+          border-bottom: none;
+      }
+
+      .loading-item-img {
+          /* width: 150px; */
+          /* height: 200px; */
+          border-radius: 5px;
+          margin-right: 20px;
+          object-fit: cover; /* Maintain aspect ratio and cover the entire space */
+      }
+
+      .loading-item-content {
+          flex-grow: 1;
+      }
+
+      .loading-item-title {
+          font-size: 18px;
+          font-weight: bold;
+      }
+
+      .loading-item-info {
+          margin-top: 5px;
+          font-size: 14px;
+      }
+
+      .loading-item-description {
+          margin-top: 5px;
+          font-size: 14px;
+          /* color: #666; */
+      }
+      .loading-text-field {
+          width: 100%;
+          padding: 5px;
+          border: 1px solid #ccc;
+          border-radius: 3px;
+          box-sizing: border-box;
+          margin-top: 5px;
+          line-height: 1.5;
+          resize: vertical;
+      }
+
+      .alert {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translateX(-50%);
+          background-color: #8ee765;
+          color: #1c7b2c;
+          padding: 10px 20px;
+          border: 1px solid #70e170;
+          border-radius: 5px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="banner">
+      <h1>Books Diary</h1>
+      <div>
+        <i class="fa fa-user icon" onclick="profile()"></i>
+        <i class="fa fa-bookmark icon" onclick="history()"></i>
+        <i class="fa fa-search icon" onclick="search()"></i>
+        <i class="fa fa-sign-out icon" onclick="logout()"></i>
+      </div>
+    </div>
+    <div class="subtitle-text" id="subtitleText">
+    </div>
+    <div id="fetchResults" class="loading-list" style="display: none;">
+      <!-- Loading list content will be inserted here -->
+    </div>
+    <script>
+        const subtitleElement = document.getElementById("subtitleText");
+        subtitleElement.innerHTML = 'My Library';
+        // Replace url with your API (Refer AWS API Gateway - stages - your API) 
+        // This is for fetching books
+        fetch('https://plu4co29ig.execute-api.us-east-2.amazonaws.com/login/fetchBooks', { 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                token: localStorage.getItem('token')
+            })
+            })
+            .then(response => response.json())
+            .then(data => {
+                fetchBooks(data);
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+            })
+        
+        function profile() {
+          window.location.href = "profile.html";
+        }
+        
+        function search() {
+          window.location.href = "search.html";
+        }
+
+        function history() {
+          window.location.href = "history.html";
+        }
+
+        function logout() {
+          // deleteToken
+          var result = confirm("Do you want to logout?");
+          if(result) {
+            fetch('https://plu4co29ig.execute-api.us-east-2.amazonaws.com/login/logout', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                token: localStorage.getItem('token')
+              })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if(data.message == 'logout success'){
+                window.location.href = "login.html";
+              } else {
+                showAlert('logout failed');
+              }
+            })
+          } else {
+            return;
+          }
+        }
+        function showAlert(msg) {
+          var alertBox = document.createElement('div');
+          alertBox.classList.add('alert');
+          alertBox.textContent = msg;
+          document.body.appendChild(alertBox);
+
+          // Remove the alert after 2 seconds
+          setTimeout(function() {
+              alertBox.remove();
+          }, 2000);
+        }
+        function fetchBooks(response) {
+            const fetchContainer = document.getElementById('fetchResults');
+            fetchContainer.innerHTML = ''; // Clear previous results
+            for (var i = 0; i < response.result.length; i++) {
+                const item = response.result[i];
+                const loadingItem = document.createElement('div');
+                loadingItem.classList.add('loading-item');
+          
+                const imgElement = document.createElement('img');
+                imgElement.classList.add('loading-item-img');
+                imgElement.src = item.bookimg;
+                loadingItem.appendChild(imgElement);
+
+                const itemContent = document.createElement('div');
+                itemContent.classList.add('loading-item-content');
+
+                const titleElement = document.createElement('div');
+                titleElement.classList.add('loading-item-title');
+                titleElement.textContent = item.booktitle; 
+                itemContent.appendChild(titleElement);
+
+                const authorElement = document.createElement('div');
+                authorElement.classList.add('loading-item-info');
+                authorElement.textContent = `Author: ${item.bookauthor}`
+                itemContent.appendChild(authorElement);
+                if(item.bookcategory != null){
+                  const catrgoryElement = document.createElement('div');
+                  catrgoryElement.classList.add('loading-item-info');
+                  catrgoryElement.textContent = `Category: ${item.bookcategory}`
+                  itemContent.appendChild(catrgoryElement);
+                }
+
+                const starElements = document.createElement('div');
+                starElements.classList.add('loading-item-info');
+                starElements.id = 'item' + (i+1) + 'starElements'; 
+                starElements.value = item.bookrate;
+                const rateElements = document.createElement('span');
+                rateElements.textContent = 'Rate : ';
+                starElements.appendChild(rateElements);
+                
+                makeStarElement(starElements);
+                itemContent.appendChild(starElements);
+                
+                const commentElements = document.createElement('div');
+                commentElements.classList.add('loading-item-info');
+                const comment = document.createElement('span');
+                comment.textContent = 'Comment : ';
+                commentElements.appendChild(comment);
+                const commentElement = document.createElement('textarea');
+                commentElement.classList.add('loading-text-field');
+                commentElement.type = 'text';
+                commentElement.value = item.bookcomment;
+                commentElements.appendChild(commentElement);
+                
+                itemContent.appendChild(commentElements);
+
+                const Buttons = document.createElement('div');
+                commentElements.classList.add('loading-item-info');
+                const saveButton = document.createElement('button');
+                saveButton.classList.add('save-button');
+                saveButton.innerHTML = 'Save'; // Checkmark icon
+                saveButton.addEventListener('click', () => save(item, starElements, commentElement, saveButton));
+                const deleteButton = document.createElement('button');
+                deleteButton.classList.add('delete-button');
+                deleteButton.innerHTML = 'Delete'; // Checkmark icon
+                deleteButton.addEventListener('click', () => deleteItem(item, deleteButton));
+
+                Buttons.appendChild(saveButton);
+                Buttons.appendChild(deleteButton);
+
+                itemContent.appendChild(Buttons);
+
+                loadingItem.appendChild(itemContent);
+                fetchContainer.appendChild(loadingItem);
+            }
+            fetchContainer.style.display = 'block';
+
+            for (var i = 0; i < response.result.length; i++) {
+              const item = response.result[i];
+              if(item.bookrate != 0){
+                const storedStarId = 'item'+(i+1)+'star'+item.bookrate;
+                starclicked(storedStarId);
+              }
+            }
+        }
+
+        function makeStarElement(starElements){
+
+          for (var j = 0; j < 5; j++){
+            const starElement = document.createElement('i');
+            starElement.classList.add('fa');
+            starElement.classList.add('fa-star');
+            starElement.classList.add('icon-star');
+            starElement.id = 'item' + (starElements.id[4]) + 'star' + (j+1);
+            starElement.addEventListener('click', () => starclicked(starElement.id));
+            starElements.appendChild(starElement);
+          }
+
+        }
+
+        function starclicked(id) {  
+          const value = id[id.length-1];
+          for (var i = 0; i < 5; i++){
+              const starElement = document.getElementById(id.substring(0, id.length-1) + (i+1));
+              if(starElement.classList[3]){
+                  starElement.classList.toggle('checked');
+              }
+          }
+          for (var i = 0; i < value; i++){
+              const starElement = document.getElementById(id.substring(0, id.length-1) + (i+1));
+              starElement.classList.toggle('checked');
+          }
+
+        const starElements = document.getElementById(id.substring(0, id.length-5) + 'starElements');
+        starElements.value = value;
+        }
+
+        function save(item, starElements, commentElement, saveButton){
+          const id = item._id;
+          if(starElements.value == undefined){
+            starElements.value = 0;
+          }
+          // Replace url with your API (Refer AWS API Gateway - stages - your API) 
+          // This is for updating comments or/and ratings
+          fetch('https://plu4co29ig.execute-api.us-east-2.amazonaws.com/login/saveComments', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              token: localStorage.getItem('token'),
+              id: item._id,
+              bookcomment: commentElement.value,
+              bookrate: starElements.value
+            })
+          })
+          .then(response => response.json())
+          .then(data => {
+            if(data.message == 'Book update success'){
+              var alertMsg = 'Book update success'
+              showAlert(alertMsg);
+            }
+          })
+        }
+
+        function deleteItem(item, saveButton){
+          var result = confirm("Do you want to delete this book?");
+          if(result) {
+            const id = item._id;
+            // Replace url with your API (Refer AWS API Gateway - stages - your API) 
+            fetch('https://plu4co29ig.execute-api.us-east-2.amazonaws.com/login/deleteBook', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                token: localStorage.getItem('token'),
+                id: item._id
+              })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if(data.message == 'Book delete success'){
+                var alertMsg = 'Book delete success'
+                showAlert(alertMsg);
+                setTimeout(function() {
+                    window.location.href = "history.html";
+                }, 500);
+              }
+            })
+
+          } else {
+            return;
+          }
+        }
+
+    </script>
+  </body>
+</html>

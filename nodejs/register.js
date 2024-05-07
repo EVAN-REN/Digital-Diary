@@ -14,7 +14,7 @@ const corsHeaders = {
 
 async function saveUserToMongoDB(username, password, email) {
     await client.connect();
-    const collection = client.db("library").collection("users");
+    const collection = client.db("Library").collection("users");
     await collection.insertOne({ username: username, password:password, isadmin: false, email: email });
     await client.close();
 }
@@ -22,7 +22,7 @@ async function saveUserToMongoDB(username, password, email) {
 async function findUsername(username) {
     console.log("finding user")
     await client.connect();
-    const collection = client.db("library").collection("users");
+    const collection = client.db("Library").collection("users");
     const user = await collection.findOne({username});
     await client.close();
     return !!user
@@ -49,16 +49,14 @@ export const handler = async (event) => {
             Message: {
                 Body: {
                     Text: {
-                        Data: `Account registration successful!\n
-                        Username:${username}\n
-                        Password:${password}`, // content
+                        Data: `Account registration successful!\nUsername: ${username}`
                     },
                 },
                 Subject: {
-                    Data: "Digital Library Register", // email subject
+                    Data: "Book Diary Registeration Success", // email subject
                 },
             },
-            Source: "kuimuren@usc.edu", // sender email address(verify in ese and replace)
+            Source: process.env.ADMIN_EMAIL, // sender email address(verify in ese and replace)
         };
 
         try {
@@ -67,13 +65,36 @@ export const handler = async (event) => {
             console.log(response);
         } catch (err) {
             console.error(err);
-            return {
-                statusCode: 500,
+            try {
+                await saveUserToMongoDB(username, password, email);
+                console.log("success register")
+                return {
+                statusCode: 200,
                 headers: corsHeaders,
                 body: JSON.stringify({
-                    message: 'Mail sending failure',
-                }),
-            };
+                    message: 'User registered successfully',
+                    }),
+                };
+                
+            } catch (err) {
+                console.log(err);
+                return {
+                    statusCode: 500,
+                    headers: corsHeaders,
+                    body: JSON.stringify({
+                        message: 'Failed to add user',
+                        error: err.toString(),
+                    }),
+                };
+            }
+            // return {
+            //     statusCode: 500,
+            //     headers: corsHeaders,
+            //     body: JSON.stringify({
+            //         message: 'Mail sending failure',
+            //     }),
+            // };
+            
         }
 
         await saveUserToMongoDB(username, password, email);

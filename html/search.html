@@ -1,0 +1,408 @@
+<html>
+  <head>
+    <title>Books Search</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        /* Styling for the banner */
+      .banner {
+          background-color: #990000;
+          color: #FFC72C;
+          padding: 15px 0;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
+
+      .banner h1 {
+          margin: 0;
+          font-size: 24px;
+      }
+      .search-container {
+        text-align:  center;
+        margin-top: 50px;
+      }
+
+      .icon {
+          font-size: 28px;
+          margin: 0 10px;
+          cursor: pointer;
+      }
+
+      .search-input {
+          padding: 10px;
+          width: 300px;
+          border-radius: 5px;
+          border: 1px solid #990000;
+          font-size: 16px;
+          margin-right: 10px;
+      }
+
+      .search-button:hover {
+          background-color: #630000;
+      }
+
+      .search-button {
+          padding: 10px 20px;
+          border-radius: 5px;
+          background-color: #990000;
+          color: #FFC72C;
+          border: none;
+          font-size: 16px;
+          cursor: pointer;
+      }
+
+      /* Styling for loading list */
+      .loading-list {
+          margin-top: 10px;
+          padding: 20px;
+          /* border: 1px solid #ccc; */
+          border: 1px solid #990000;
+          border-radius: 5px;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .recommend-text {
+          margin-top: 50px;
+          padding: 20px;
+          font-size: 24px;
+          border-radius: 5px;
+          color: #34322e;
+          font-weight : bold;
+      }
+
+      .loading-item {
+          padding: 10px;
+          /* border-bottom: 1px solid #ccc; */
+          border-bottom: 1px solid #990000;
+          display: flex;
+          align-items: center;
+      }
+
+      .loading-item:last-child {
+          border-bottom: none;
+      }
+
+      .loading-item-img {
+          /* width: 150px; */
+          /* height: 200px; */
+          border-radius: 5px;
+          margin-right: 20px;
+          object-fit: cover; /* Maintain aspect ratio and cover the entire space */
+      }
+
+      .loading-item-content {
+          flex-grow: 1;
+      }
+
+      .loading-item-title {
+          font-size: 18px;
+          font-weight: bold;
+      }
+
+      .loading-item-info {
+          margin-top: 5px;
+          font-size: 14px;
+      }
+
+      .loading-item-description {
+          margin-top: 5px;
+          font-size: 14px;
+          /* color: #666; */
+      }
+
+      .save-button {
+          background-color: #778179; /* Green */
+          border: none;
+          color: #FFC72C;
+          padding: 10px 20px;
+          text-align: center;
+          text-decoration: none;
+          display: inline-block;
+          font-size: 16px;
+          margin-top: 10px;
+          border-radius: 5px;
+          cursor: pointer;
+      }
+
+      .save-button:hover {
+            background-color: #b3bcb6;
+      }
+
+      .save-button.saved {
+            background-color: #800000;
+            color: #FFC72C;
+      }
+
+      .alert {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translateX(-50%);
+          background-color: #8ee765;
+          color: #1c7b2c;
+          padding: 10px 20px;
+          border: 1px solid #70e170;
+          border-radius: 5px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+
+      .alert_red {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translateX(-50%);
+          background-color: #f8d7da;
+          color: #721c24;
+          padding: 10px 20px;
+          border: 1px solid #f5c6cb;
+          border-radius: 5px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+
+      /* .loading-item-img {
+          width: 100px; /* Fixed width */
+          /* height: 100px; Fixed height */
+          /* object-fit: cover; Maintain aspect ratio and cover the entire space */
+          /* border-radius: 5px; */
+          /* margin-right: 20px; */
+       /* } */
+      
+    </style>
+  </head>
+  <body>
+    <div class="banner">
+      <h1>Books Diary</h1>
+      <div>
+        <i class="fa fa-user icon" onclick="profile()"></i>
+        <i class="fa fa-bookmark icon" onclick="history()"></i>
+        <i class="fa fa-search icon" onclick="search()"></i>
+        <i class="fa fa-sign-out icon" onclick="logout()"></i>
+      </div>
+    </div>
+    <div class="search-container">
+      <input type="text" id="searchInput" name="q" class="search-input" placeholder="Enter your book titles">  
+      <button type="submit" id="searchBtn" onclick="searchButton()" class="search-button">Search</button>
+    </div>
+    <div class="recommend-text" id = "recommendText">
+    </div>
+    <div id="searchResults" class="loading-list" style="display: none;">
+      <!-- Loading list content will be inserted here -->
+    </div>
+    <script>
+      // Replace url with your API (Refer AWS API Gateway - stages - your API) 
+      // Get keyword and its group (e.g. J.K Rowling and author)
+      fetch('https://plu4co29ig.execute-api.us-east-2.amazonaws.com/login/recommendBooks', { 
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            token: localStorage.getItem('token')
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+          recommendBooks(data);
+      })
+      .catch(error => {
+          console.error('Error fetching data:', error);
+      })      
+      function showAlert(msg, ver = 0) {
+        var alertBox = document.createElement('div');
+        if(ver == 1) {
+          alertBox.classList.add('alert_red');
+        } else {
+          alertBox.classList.add('alert');
+        }
+        alertBox.textContent = msg;
+        document.body.appendChild(alertBox);
+
+        // Remove the alert after 2 seconds
+        setTimeout(function() {
+            alertBox.remove();
+        }, 2000);
+      }
+
+      function recommendBooks(data){
+        const recommendTextElement = document.getElementById('recommendText');
+        let recommendsrc = '';
+        if(data.result_length == 0){
+          recommendTextElement.innerHTML = 'Recommended books : 0 (You don\'t have saved books)'
+          console.log("No saved books");
+        } else {
+          // Google Books API (search with author name or category or title)
+          if(data.RecommendType == "author"){
+            recommendTextElement.innerHTML = `You are interested in ${data.RecommendKeyword} author. We will recommend related books to you!`
+            recommendsrc = `https://www.googleapis.com/books/v1/volumes?q=inauthor:${data.RecommendKeyword}&maxResults=4`;  
+          } else if (data.RecommendType == "category"){
+            recommendTextElement.innerHTML = `You are interested in ${data.RecommendKeyword} category. We will recommend related books to you!`  
+            recommendsrc = `https://www.googleapis.com/books/v1/volumes?q=subject:${data.RecommendKeyword}&maxResults=4`;
+          } else if (data.RecommendType == "title"){
+            recommendTextElement.innerHTML = `You are interested in ${data.RecommendKeyword} related books. We will recommend related books to you!`  
+            recommendsrc = `https://www.googleapis.com/books/v1/volumes?q=title:${data.RecommendKeyword}&maxResults=4`;
+          }
+          fetch(recommendsrc)
+          .then(response => response.json())
+          .then(data => {
+            handleResponse(data);
+          })
+          .catch(error => {
+            console.error('Error fetching data:', error);
+          })
+        }
+      }
+      const input = document.getElementById("searchInput");
+      input.addEventListener("keyup", function(event) {
+        if (event.keyCode === 13) {
+          document.getElementById("searchBtn").click();
+        }
+      });
+
+      function profile() {
+          window.location.href = "profile.html";
+      }
+
+      function history() {
+        window.location.href = "history.html";
+      }
+      function search() {
+        window.location.href = "search.html";
+      }
+      function logout() {
+          // deleteToken
+          var result = confirm("Do you want to logout?");
+          if(result) {
+            fetch('https://plu4co29ig.execute-api.us-east-2.amazonaws.com/login/logout', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                token: localStorage.getItem('token')
+              })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if(data.message == 'logout success'){
+                window.location.href = "login.html";
+              } else {
+                showAlert('logout failed');
+              }
+            })
+          } else {
+            return;
+          }
+        }
+      function searchButton() {
+        let searchResults = document.getElementById('searchResults')
+        let recommendTextElement = document.getElementById('recommendText')
+        searchResults.innerHTML = '';
+        const searchTerm = document.getElementById('searchInput').value.trim();
+
+        recommendTextElement.innerHTML = `Results related to ${searchTerm}`;
+        // Google Books API (search for keyword)
+        let src = 'https://www.googleapis.com/books/v1/volumes?q='+searchTerm;  
+        fetch(src)
+          .then(response => response.json())
+          .then(data => {
+            handleResponse(data);
+          })
+          .catch(error => {
+            console.error('Error fetching data:', error);
+          })
+      }
+      function handleResponse(response) {
+
+        const resultsContainer = document.getElementById('searchResults');
+        resultsContainer.innerHTML = ''; // Clear previous results
+        for (var i = 0; i < response.items.length; i++) {
+          const item = response.items[i];
+          const loadingItem = document.createElement('div');
+          loadingItem.classList.add('loading-item');
+          
+          const imgElement =  document.createElement('img');
+          imgElement.classList.add('loading-item-img');
+          if(item.volumeInfo.imageLinks == undefined){
+            imgElement.src = 'https://via.placeholder.com/130X170';
+          } else {
+            imgElement.src = item.volumeInfo.imageLinks.thumbnail;
+          }
+          loadingItem.appendChild(imgElement);
+          
+          const itemContent = document.createElement('div');
+          itemContent.classList.add('loading-item-content');
+
+          const titleElement = document.createElement('div');
+          titleElement.classList.add('loading-item-title');
+          titleElement.textContent = item.volumeInfo.title; 
+          itemContent.appendChild(titleElement);
+          
+          const info = document.createElement('div');
+          info.classList.add('loading-item-info');
+          info.textContent = `Author: ${item.volumeInfo.authors}`
+          itemContent.appendChild(info);
+
+          if(item.volumeInfo.categories != undefined) {
+            const catrgoryElement = document.createElement('div');
+            catrgoryElement.classList.add('loading-item-info');
+            catrgoryElement.textContent = `Category: ${item.volumeInfo.categories}`
+            itemContent.appendChild(catrgoryElement);
+          }
+          
+          if(item.volumeInfo.averageRating != undefined){
+            const rateElement = document.createElement('div');
+            rateElement.classList.add('loading-item-info');
+            rateElement.textContent = `Rate: ${item.volumeInfo.averageRating}`
+            itemContent.appendChild(rateElement);
+          }
+
+          const descElement = document.createElement('div');
+          descElement.classList.add('loading-item-description');
+          descElement.textContent = `Description: ${item.volumeInfo.description}`
+          itemContent.appendChild(descElement)
+
+          const saveButton = document.createElement('button');
+          saveButton.classList.add('save-button');
+          saveButton.innerHTML = 'Save'; // Checkmark icon
+          saveButton.addEventListener('click', () => saveBook(item, saveButton));
+          itemContent.appendChild(saveButton);
+      
+          loadingItem.appendChild(itemContent);
+          resultsContainer.appendChild(loadingItem);
+        }
+        resultsContainer.style.display = 'block';
+      }
+      function saveBook(item, saveButton) {
+        if(saveButton.classList.value == 'save-button'){
+          saveButton.classList.toggle('saved');
+        } else if(saveButton.classList.value == 'save-button saved'){
+          var alertMsg = item.volumeInfo.title + ' has been already saved'
+          showAlert(alertMsg, 1)
+          return;
+        }
+        // Replace url with your API (Refer AWS API Gateway - stages - your API) 
+        // Save books into one's library
+        fetch('https://plu4co29ig.execute-api.us-east-2.amazonaws.com/login/saveBooks', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            token: localStorage.getItem('token'),
+            booktitle: item.volumeInfo.title,
+            bookimg: item.volumeInfo.imageLinks.thumbnail,
+            bookcategory: item.volumeInfo.categories,
+            bookauthor: item.volumeInfo.authors
+          })
+        })
+          .then(response => response.json())
+          .then(data => {
+            if(data.message == 'Book add success'){
+              alertMsg = item.volumeInfo.title + ' saved.'
+              showAlert(alertMsg)
+        }
+          })
+      }
+    </script>
+  </body>
+</html>
